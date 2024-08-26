@@ -1,12 +1,17 @@
 import Head from 'next/head'
 import TimeAgo from "javascript-time-ago";
 import en from 'javascript-time-ago/locale/en'
+
 TimeAgo.addDefaultLocale(en);
+
+const REVALIDATION_PERIOD = 60;
 
 export default function Home(props) {
     const {data, age, fetchDate} = props;
 
     const relativeTimeFormatter = new TimeAgo('en-US')
+    const fetchDateParsed = new Date(fetchDate);
+    const fetchDateISO = fetchDateParsed.toISOString();
 
     return (
         <div>
@@ -19,10 +24,12 @@ export default function Home(props) {
                     Next 12 ISR Test
                 </h1>
 
-                <h2>API data from getStaticProps()</h2>
-                <p>Fetched: {fetchDate} ({relativeTimeFormatter.format(Date.parse(fetchDate))})<br/>
-                    Content age: {age} seconds ({relativeTimeFormatter.format(Date.parse(fetchDate) - (age * 1000))})
+                <p>Content age:<code> {age} seconds
+                    ({relativeTimeFormatter.format(fetchDateParsed - (age * 1000), 'mini-minute')} before fetch)</code></p>
+                <p>Fetch date: <code>{fetchDateISO}</code></p>
+                <p>Revalidate set to: <code>{REVALIDATION_PERIOD}</code>s
                 </p>
+                <h2>API request body from getStaticProps()</h2>
                 <pre>
                     <code>
                         {JSON.stringify(data, null, 2)}
@@ -60,7 +67,7 @@ export const getStaticProps = (async () => {
 
     return {
         props: {data, fetchDate: response.headers.get('date'), age: response.headers.get('age')},
-        revalidate: 1,
+        revalidate: REVALIDATION_PERIOD,
     }
 })
 
